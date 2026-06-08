@@ -1,0 +1,40 @@
+{
+  "trips": [
+    {
+      "id": "trip-1",
+      "date": "2026-06-05",
+      "zoneName": "Munambam Bank",
+      "coastName": "Kochi, Ernakulam",
+      "distanceKm": 18,
+      "catchTier": "good",
+      "outcome": "good_catch"
+    },
+    {
+      "id": "trip-2",
+      "date": "2026-06-03",
+      "zoneName": "Fort Kochi Patch",
+      "coastName": "Kochi, Ernakulam",
+      "distanceKm": 8,
+      "catchTier": "ok",
+      "outcome": "some_catch"
+    },
+    {
+      "id": "trip-3",
+      "date": "2026-06-01",
+      "zoneName": "Vypin Shelf",
+      "coastName": "Kochi, Ernakulam",
+      "distanceKm": 22,
+      "catchTier": "low",
+      "outcome": "poor_catch"
+    },
+    {
+      "id": "trip-4",
+      "date": "2026-05-28",
+      "zoneName": "Munambam Bank",
+      "coastName": "Kochi, Ernakulam",
+      "distanceKm": 18,
+      "catchTier": "good",
+      "outcome": "good_catch"
+    }
+  ]
+}

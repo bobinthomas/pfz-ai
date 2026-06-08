@@ -1,0 +1,122 @@
+{
+  "meta": {
+    "generatedAt": "2026-06-05T22:12:00Z",
+    "source": "INCOIS",
+    "ttlSeconds": 21600
+  },
+  "coast": {
+    "id": "kochi",
+    "name": "Kochi, Ernakulam",
+    "harbour": { "lat": 9.97, "lng": 76.28 }
+  },
+  "date": "2026-06-07",
+  "boat": {
+    "id": "KER-992-04",
+    "name": "Sea Queen II",
+    "rangeKm": 50,
+    "gear": ["purse_seine"],
+    "maxDepthM": 80
+  },
+  "weather": {
+    "state": "calm",
+    "windKts": 14,
+    "windDir": "SW",
+    "waveM": 1.2,
+    "sstC": 28.4,
+    "severeWarning": false
+  },
+  "zones": [
+    {
+      "id": "KL-712",
+      "name": "Munambam Bank",
+      "center": { "lat": 10.18, "lng": 76.16 },
+      "distanceKm": 30,
+      "bearing": "SW",
+      "etaMins": 65,
+      "depthM": [40, 80],
+      "catch": { "tier": "good", "score": 0.9 },
+      "confidence": {
+        "level": "high",
+        "score": 0.86,
+        "reasons": ["high_chlorophyll", "thermal_front", "recent_success"]
+      },
+      "signals": { "sstC": 28.4, "chlorophyll": 0.42 },
+      "species": ["mackerel", "tuna"],
+      "gear": ["purse_seine", "longline"],
+      "dataStatus": "ok"
+    },
+    {
+      "id": "KL-842",
+      "name": "Deep Ridge",
+      "center": { "lat": 10.05, "lng": 75.82 },
+      "distanceKm": 78,
+      "bearing": "W",
+      "etaMins": 180,
+      "depthM": [60, 120],
+      "catch": { "tier": "good", "score": 0.95 },
+      "confidence": {
+        "level": "high",
+        "score": 0.91,
+        "reasons": ["high_chlorophyll", "thermal_front"]
+      },
+      "signals": { "sstC": 28.6, "chlorophyll": 0.55 },
+      "species": ["tuna"],
+      "gear": ["longline"],
+      "dataStatus": "ok"
+    },
+    {
+      "id": "KL-901",
+      "name": "Vypin Nearshore",
+      "center": { "lat": 9.92, "lng": 76.22 },
+      "distanceKm": 12,
+      "bearing": "SSW",
+      "etaMins": 30,
+      "depthM": [15, 35],
+      "catch": { "tier": "ok", "score": 0.65 },
+      "confidence": {
+        "level": "fair",
+        "score": 0.62,
+        "reasons": ["mixed_signal"]
+      },
+      "signals": { "sstC": 28.2, "chlorophyll": 0.28 },
+      "species": ["sardine"],
+      "gear": ["purse_seine", "gillnet"],
+      "dataStatus": "ok"
+    },
+    {
+      "id": "KL-455",
+      "name": "Fort Kochi Outer",
+      "center": { "lat": 9.88, "lng": 76.15 },
+      "distanceKm": 22,
+      "bearing": "S",
+      "etaMins": 50,
+      "depthM": [20, 45],
+      "catch": { "tier": "low", "score": 0.35 },
+      "confidence": {
+        "level": "low",
+        "score": 0.3,
+        "reasons": ["weak_signal"]
+      },
+      "signals": { "sstC": 28.1, "chlorophyll": 0.15 },
+      "species": ["sardine"],
+      "gear": ["gillnet"],
+      "dataStatus": "ok"
+    },
+    {
+      "id": "KL-441",
+      "name": "Chellanam Shelf",
+      "center": { "lat": 9.85, "lng": 76.28 },
+      "distanceKm": 18,
+      "bearing": "SE",
+      "etaMins": 40,
+      "depthM": [25, 50],
+      "dataStatus": "low_data",
+      "reason": "cloud_cover"
+    }
+  ],
+  "accuracy": {
+    "windowDays": 7,
+    "correct": 6,
+    "history": [true, true, true, false, true, true, true]
+  }
+}

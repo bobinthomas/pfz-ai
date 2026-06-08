@@ -1,0 +1,82 @@
+:root {
+  /* Surfaces */
+  --bg: #eef3f6;
+  --card: #ffffff;
+  --soft: #f2f6f8;
+  --soft2: #e9eff3;
+
+  /* Ink */
+  --ink: #0e2238;
+  --ink2: #5b7180;
+  --line: #e3e9ee;
+  --line2: #d3dde3;
+
+  /* Brand */
+  --teal: #0e7c86;
+  --navy: #0d2236;
+
+  /* Semantic — catch tiers */
+  --good: #2f9e5b;
+  --good-bg: #d8f0e0;
+  --ok: #2a7da0;
+  --ok-bg: #d4ebf5;
+  --low: #b9760a;
+  --low-bg: #f6e6cb;
+  --nodata: #8a98a3;
+  --nodata-bg: #e7ecef;
+
+  /* Semantic — safety */
+  --caution: #b9760a;
+  --stop: #bb392c;
+
+  /* Typography */
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-tamil: 'Noto Sans Tamil', system-ui, sans-serif;
+  --font-malayalam: 'Noto Sans Malayalam', system-ui, sans-serif;
+
+  /* Layout */
+  --max-width: 1300px;
+  --breakpoint-tablet: 980px;
+
+  /* Radii */
+  --radius-card: 18px;
+  --radius-pill: 999px;
+
+  /* Touch */
+  --touch-min: 48px;
+  --touch-primary: 56px;
+
+  /* Hero gradients (darker stops for sunlight contrast) */
+  --hero-go: linear-gradient(150deg, #1a7a47, #0d4d2c);
+  --hero-caution: linear-gradient(150deg, #9a6208, #6e4505);
+  --hero-stop: linear-gradient(150deg, #b83828, #7a2218);
+  --hero-neutral: linear-gradient(150deg, #7a8790, #4d5f6b);
+
+  /* Course map */
+  --map-sea-top: #c7e6e9;
+  --map-sea-bottom: #e0eef0;
+  --map-shore: #e9dfc8;
+  --map-shore-line: #d2c4a3;
+  --map-ring: rgba(14, 124, 134, 0.25);
+}
+
+.lang-ta {
+  --font-body: var(--font-tamil);
+  --font-display: var(--font-tamil);
+}
+
+.lang-ml {
+  --font-body: var(--font-malayalam);
+  --font-display: var(--font-malayalam);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

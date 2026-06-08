@@ -1,0 +1,54 @@
+{
+  "meta": {
+    "generatedAt": "2026-06-07T05:12:00Z",
+    "source": "INCOIS",
+    "ttlSeconds": 21600
+  },
+  "coast": {
+    "id": "kochi",
+    "name": "Kochi, Ernakulam",
+    "harbour": { "lat": 9.97, "lng": 76.28 }
+  },
+  "date": "2026-06-07",
+  "boat": {
+    "id": "KER-992-04",
+    "name": "Sea Queen II",
+    "rangeKm": 50,
+    "gear": ["purse_seine"],
+    "maxDepthM": 80
+  },
+  "weather": {
+    "state": "severe",
+    "windKts": 42,
+    "windDir": "SW",
+    "waveM": 3.8,
+    "sstC": 27.8,
+    "severeWarning": true
+  },
+  "zones": [
+    {
+      "id": "KL-712",
+      "name": "Munambam Bank",
+      "center": { "lat": 10.18, "lng": 76.16 },
+      "distanceKm": 30,
+      "bearing": "SW",
+      "etaMins": 65,
+      "depthM": [40, 80],
+      "catch": { "tier": "good", "score": 0.9 },
+      "confidence": {
+        "level": "high",
+        "score": 0.86,
+        "reasons": ["high_chlorophyll"]
+      },
+      "signals": { "sstC": 28.4, "chlorophyll": 0.42 },
+      "species": ["mackerel", "tuna"],
+      "gear": ["purse_seine", "longline"],
+      "dataStatus": "ok"
+    }
+  ],
+  "accuracy": {
+    "windowDays": 7,
+    "correct": 6,
+    "history": [true, true, true, false, true, true, true]
+  }
+}
