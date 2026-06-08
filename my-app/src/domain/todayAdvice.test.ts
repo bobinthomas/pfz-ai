@@ -13,6 +13,9 @@ describe('getTodayAdvice', () => {
   it('AC1: fresh good safe → GO, high confidence, worth_it', () => {
     const advice = getTodayAdvice(calmForecast, new Date('2026-06-07T06:00:00Z'))
     expect(advice.decision).toBe('GO')
+    expect(advice.catchHeadlineKey).toBe('ch_good')
+    expect(advice.heroGradient).toBe('good')
+    expect(advice.catchConfidenceReasonKey).toBe('reasonHigh')
     expect(advice.confidence).toBe('high')
     expect(advice.worth?.verdict).toBe('worth_it')
     expect(advice.primaryAction).toBe('navigate')
@@ -36,6 +39,8 @@ describe('getTodayAdvice', () => {
     const advice = getTodayAdvice(severeForecast, new Date('2026-06-07T06:00:00Z'))
     expect(advice.decision).toBe('NO_GO')
     expect(advice.screenState).toBe('severe')
+    expect(advice.catchHeadlineKey).toBe('v_stop')
+    expect(advice.heroGradient).toBe('stop')
     expect(advice.decisionReasonKey).toBe('decisionReason_unsafe')
   })
 

@@ -1,6 +1,7 @@
 import { computeWorth, type WorthInfo } from './economics'
 import {
   bestReachable,
+  catchHeadlineKey,
   hasReachableCatchAboveLow,
   strongerOutOfRange,
 } from './ranking'
@@ -24,10 +25,17 @@ export type AdviceScreenState =
   | 'empty'
   | 'noBoat'
 
+export type HeroGradient = 'good' | 'ok' | 'low' | 'stop' | 'neutral'
+
 export interface TodayAdviceView {
   screenState: AdviceScreenState
   decision: Decision | null
   decisionReasonKey: string
+  /** v41 catch-first hero headline (ch_good, v_stop, emptyTitle, …). */
+  catchHeadlineKey: string
+  heroGradient: HeroGradient
+  /** Narrative confidence reason for the hero block (reasonHigh, reasonFair, …). */
+  catchConfidenceReasonKey: string
   bestZone: Zone | null
   catchTier: CatchTier | null
   confidence: ConfidenceLevel | null
@@ -70,6 +78,39 @@ function confidenceReasonKey(
   if (capped === 'low') return 'confidenceReason_weak'
   if (capped === 'fair') return 'confidenceReason_mixed'
   return 'confidenceReason_fresh_strong'
+}
+
+/** Fish-focused narrative for the hero confidence block (v41 copy). */
+function catchConfidenceReasonKey(
+  staleness: StalenessLevel,
+  capped: ConfidenceLevel | null,
+): string {
+  if (staleness === 'very_stale') return 'reasonVeryStale'
+  if (staleness === 'stale') return 'reasonStale'
+  if (capped === 'low') return 'reasonLow'
+  if (capped === 'fair') return 'reasonFair'
+  return 'reasonHigh'
+}
+
+function heroGradient(
+  state: AdviceScreenState,
+  catchTier: CatchTier | null,
+): HeroGradient {
+  if (state === 'severe') return 'stop'
+  if (!catchTier || catchTier === 'nodata') return 'neutral'
+  if (catchTier === 'good') return 'good'
+  if (catchTier === 'ok') return 'ok'
+  return 'low'
+}
+
+function resolveCatchHeadlineKey(
+  state: AdviceScreenState,
+  catchTier: CatchTier | null,
+): string {
+  if (state === 'severe') return 'v_stop'
+  if (state === 'empty') return 'emptyTitle'
+  if (state === 'noReachable') return 'noReachableTitle'
+  return catchHeadlineKey(catchTier ?? 'nodata')
 }
 
 function resolveDecision(input: {
@@ -160,6 +201,9 @@ export function getTodayAdvice(
       screenState: state,
       decision: null,
       decisionReasonKey: 'noBoatSub',
+      catchHeadlineKey: 'noBoatTitle',
+      heroGradient: 'neutral',
+      catchConfidenceReasonKey: '',
       bestZone: null,
       catchTier: null,
       confidence: null,
@@ -180,6 +224,9 @@ export function getTodayAdvice(
       screenState: state,
       decision: 'NO_GO',
       decisionReasonKey: 'decisionReason_empty',
+      catchHeadlineKey: resolveCatchHeadlineKey(state, null),
+      heroGradient: heroGradient(state, null),
+      catchConfidenceReasonKey: '',
       bestZone: null,
       catchTier: null,
       confidence: null,
@@ -200,6 +247,9 @@ export function getTodayAdvice(
       screenState: state,
       decision: 'NO_GO',
       decisionReasonKey: 'decisionReason_no_reachable',
+      catchHeadlineKey: resolveCatchHeadlineKey(state, null),
+      heroGradient: heroGradient(state, null),
+      catchConfidenceReasonKey: '',
       bestZone: null,
       catchTier: null,
       confidence: null,
@@ -236,12 +286,17 @@ export function getTodayAdvice(
     hasReachable,
   })
 
+  const displayTier = catchTier === 'nodata' ? null : catchTier
+
   return {
     screenState: state,
     decision,
     decisionReasonKey: reasonKey,
+    catchHeadlineKey: resolveCatchHeadlineKey(state, catchTier),
+    heroGradient: heroGradient(state, displayTier),
+    catchConfidenceReasonKey: catchConfidenceReasonKey(staleness, confidence),
     bestZone,
-    catchTier: catchTier === 'nodata' ? null : catchTier,
+    catchTier: displayTier,
     confidence,
     confidenceReasonKey: confidenceReasonKey(staleness, confidence),
     staleness,

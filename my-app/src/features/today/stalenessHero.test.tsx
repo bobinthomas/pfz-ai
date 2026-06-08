@@ -36,8 +36,9 @@ describe('Hero decision display', () => {
     )
 
     expect(advice.decision).toBe('CAUTION')
+    expect(advice.catchHeadlineKey).toBe('ch_good')
+    expect(screen.getByText('Strong catch likely')).toBeInTheDocument()
     expect(screen.getByText('GO WITH CAUTION')).toBeInTheDocument()
-    expect(screen.queryByText('GO')).toBeNull()
     expect(screen.getAllByText('Low')).toHaveLength(1)
     expect(screen.getByRole('status')).toHaveTextContent(
       'This advice is from about 29 hours ago — conditions may have changed.',
@@ -62,8 +63,10 @@ describe('Hero decision display', () => {
     )
 
     expect(advice.decision).toBe('GO')
-    expect(screen.getByText(/^GO$/)).toBeInTheDocument()
+    expect(screen.getByText('Strong catch likely')).toBeInTheDocument()
+    expect(screen.getByText('GO')).toBeInTheDocument()
     expect(screen.getAllByText('High')).toHaveLength(1)
+    expect(screen.getByText(/Best at Munambam Bank/)).toBeInTheDocument()
     expect(screen.queryByRole('status')).toBeNull()
   })
 })
