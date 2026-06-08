@@ -17,6 +17,12 @@ export interface Boat {
   rangeKm: number
   gear: string[]
   maxDepthM: number
+  fuelLitresPerKm?: number
+}
+
+export interface ForecastConfig {
+  fuelPricePerLitre: number
+  currency: string
 }
 
 export interface Coast {
@@ -79,11 +85,16 @@ export interface Accuracy {
   history: boolean[]
 }
 
+export type Decision = 'GO' | 'CAUTION' | 'NO_GO'
+export type WeatherVerdict = 'safe' | 'caution' | 'unsafe'
+export type PrimaryAction = 'navigate' | 'refresh'
+
 export interface Forecast {
   meta: ForecastMeta
   coast: Coast
   date: string
   boat?: Boat
+  config?: ForecastConfig
   weather: Weather
   zones: Zone[]
   advisory?: { kind: string; text: string } | null

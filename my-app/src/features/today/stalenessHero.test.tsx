@@ -2,21 +2,16 @@ import { render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import calm from '@/mocks/fixtures/forecast.calm.json'
 import stale from '@/mocks/fixtures/forecast.stale.json'
-import type { Boat, Coast, Forecast, Weather } from '@/domain/types'
+import type { Forecast } from '@/domain/types'
 import '@/lib/i18n/config'
-import { getStalenessFromMeta, getTodayAdvice } from '@/domain'
-import { bestReachable } from '@/domain'
+import { bestReachable, getTodayAdvice } from '@/domain'
 import { Hero } from './Hero'
-import { resolveHeroKind } from './heroKind'
 
 const staleForecast = stale as Forecast
 const calmForecast = calm as Forecast
-const boat = staleForecast.boat as Boat
-const weather = staleForecast.weather as Weather
-const coast = staleForecast.coast as Coast
 const now = new Date('2026-06-07T03:12:00Z')
 
-describe('Hero staleness display', () => {
+describe('Hero decision display', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(now)
@@ -26,66 +21,48 @@ describe('Hero staleness display', () => {
     vi.useRealTimers()
   })
 
-  it('very_stale: cautious headline, single Low confidence, muted pill, no double ago', () => {
-    const best = bestReachable(staleForecast.zones, boat)
-    const staleness = getStalenessFromMeta(staleForecast.meta, now)
-    const advice = getTodayAdvice({
-      heroKind: resolveHeroKind(staleForecast, best),
-      bestZone: best,
-      weather,
-      staleness,
-    })
+  it('very_stale: CAUTION badge, Low confidence once, muted pill, no double ago', () => {
+    const advice = getTodayAdvice(staleForecast, now, { online: true })
+    const best = bestReachable(staleForecast.zones, staleForecast.boat!)
 
     render(
       <Hero
-        heroKind={resolveHeroKind(staleForecast, best)}
+        advice={advice}
+        forecast={staleForecast}
         bestZone={best}
-        allZones={staleForecast.zones}
-        coast={coast}
-        boat={boat}
-        weather={weather}
-        dataStaleness={staleness}
-        generatedAt={staleForecast.meta.generatedAt}
+        isFetching={false}
+        onRefresh={() => {}}
       />,
     )
 
-    expect(advice.headlineKey).toBe('v_check')
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Check before you go',
-    )
-    expect(screen.queryByText('Good day to fish')).toBeNull()
+    expect(advice.decision).toBe('CAUTION')
+    expect(screen.getByText('GO WITH CAUTION')).toBeInTheDocument()
+    expect(screen.queryByText('GO')).toBeNull()
     expect(screen.getAllByText('Low')).toHaveLength(1)
-    expect(screen.queryByText('High')).toBeNull()
     expect(screen.getByRole('status')).toHaveTextContent(
       'This advice is from about 29 hours ago — conditions may have changed.',
     )
     expect(screen.getByRole('status').textContent).not.toMatch(/ago ago/)
+    expect(screen.getByText("Get today's reading")).toBeInTheDocument()
   })
 
-  it('fresh good: confident headline and High confidence once', () => {
+  it('fresh good: GO badge and High confidence once', () => {
     vi.setSystemTime(new Date('2026-06-07T06:00:00Z'))
-    const best = bestReachable(calmForecast.zones, boat)
-    const staleness = getStalenessFromMeta(
-      calmForecast.meta,
-      new Date('2026-06-07T06:00:00Z'),
-    )
+    const advice = getTodayAdvice(calmForecast, new Date('2026-06-07T06:00:00Z'))
+    const best = bestReachable(calmForecast.zones, calmForecast.boat!)
 
     render(
       <Hero
-        heroKind={resolveHeroKind(calmForecast, best)}
+        advice={advice}
+        forecast={calmForecast}
         bestZone={best}
-        allZones={calmForecast.zones}
-        coast={calmForecast.coast as Coast}
-        boat={boat}
-        weather={calmForecast.weather as Weather}
-        dataStaleness={staleness}
-        generatedAt={calmForecast.meta.generatedAt}
+        isFetching={false}
+        onRefresh={() => {}}
       />,
     )
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Good day to fish',
-    )
+    expect(advice.decision).toBe('GO')
+    expect(screen.getByText(/^GO$/)).toBeInTheDocument()
     expect(screen.getAllByText('High')).toHaveLength(1)
     expect(screen.queryByRole('status')).toBeNull()
   })

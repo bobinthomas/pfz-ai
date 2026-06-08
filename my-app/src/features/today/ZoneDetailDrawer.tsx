@@ -11,7 +11,9 @@ import {
   displayConfidenceForZone,
   gearFits,
   isReachable,
+  zoneFuelEstimate,
   type Boat,
+  type ForecastConfig,
   type StalenessLevel,
   type Weather,
   type Zone,
@@ -29,6 +31,7 @@ interface ZoneDetailDrawerProps {
   letter: string
   boat: Boat
   weather: Weather
+  config?: ForecastConfig
   dataStaleness?: StalenessLevel
   onClose: () => void
 }
@@ -38,6 +41,7 @@ export function ZoneDetailDrawer({
   letter,
   boat,
   weather,
+  config,
   dataStaleness = 'fresh',
   onClose,
 }: ZoneDetailDrawerProps) {
@@ -52,6 +56,7 @@ export function ZoneDetailDrawer({
   const mutedCatch = dataStaleness !== 'fresh'
   const displayLevel = displayConfidenceForZone(zone, dataStaleness)
   const reachable = isReachable(zone, boat)
+  const fuel = zoneFuelEstimate(zone, boat, config)
   const species =
     (zone.species ?? []).map((s) => t(`species:${s}`)).join(', ') ||
     t('fishHere')
@@ -163,6 +168,16 @@ export function ZoneDetailDrawer({
             value={`${zone.distanceKm} km`}
             sub={`${zone.depthM[0]}–${zone.depthM[1]} m ${t('depthLabel')}`}
           />
+        </div>
+
+        <div className="rounded-2xl border border-line bg-soft px-4 py-3">
+          <p className="text-xs font-extrabold uppercase tracking-wide text-ink2">
+            {t('worthTrip')}
+          </p>
+          <p className="mt-1 font-display text-lg font-bold text-ink">
+            ≈ {fuel.fuelLitres} L · ≈ ₹{fuel.fuelCost} · {fuel.roundTripKm} km{' '}
+            {t('worthRoundTrip')}
+          </p>
         </div>
 
         <h3 className="font-display text-lg font-bold text-ink">{t('whatUse')}</h3>

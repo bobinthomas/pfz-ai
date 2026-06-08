@@ -1,75 +1,79 @@
 import { describe, expect, it } from 'vitest'
 import calm from '@/mocks/fixtures/forecast.calm.json'
+import severe from '@/mocks/fixtures/forecast.severe.json'
 import stale from '@/mocks/fixtures/forecast.stale.json'
-import type { Boat, Forecast } from './types'
-import { bestReachable } from './ranking'
-import { getStalenessFromMeta } from './staleness'
+import type { Forecast } from './types'
 import { getTodayAdvice } from './todayAdvice'
+
 const calmForecast = calm as Forecast
 const staleForecast = stale as Forecast
-const boat = calmForecast.boat as Boat
-const now = new Date('2026-06-07T03:12:00Z')
-
-function adviceFor(forecast: Forecast, at: Date) {
-  const best = bestReachable(forecast.zones, boat)
-  const staleness = getStalenessFromMeta(forecast.meta, at)
-  return getTodayAdvice({
-    heroKind: 'normal',
-    bestZone: best,
-    weather: forecast.weather,
-    staleness,
-  })
-}
+const severeForecast = severe as Forecast
 
 describe('getTodayAdvice', () => {
-  it('fresh good fixture: confident headline and raw high confidence', () => {
-    const freshNow = new Date('2026-06-07T06:00:00Z')
-    const advice = adviceFor(calmForecast, freshNow)
-    expect(advice.headlineKey).toBe('ch_good')
-    expect(advice.displayConfidence).toBe('high')
-    expect(advice.showStaleBanner).toBe(false)
+  it('AC1: fresh good safe → GO, high confidence, worth_it', () => {
+    const advice = getTodayAdvice(calmForecast, new Date('2026-06-07T06:00:00Z'))
+    expect(advice.decision).toBe('GO')
+    expect(advice.confidence).toBe('high')
+    expect(advice.worth?.verdict).toBe('worth_it')
+    expect(advice.primaryAction).toBe('navigate')
     expect(advice.mutedCatchPill).toBe(false)
+    expect(advice.bestZone?.id).toBe('KL-712')
   })
 
-  it('stale fixture: check-first headline and fair-capped confidence', () => {
-    const advice = adviceFor(calmForecast, new Date('2026-06-07T14:00:00Z'))
-    expect(advice.headlineKey).toBe('v_check_stale')
-    expect(advice.displayConfidence).toBe('fair')
-    expect(advice.showStaleBanner).toBe(true)
-    expect(advice.mutedCatchPill).toBe(true)
-    expect(advice.headlineKey).not.toBe('ch_good')
-  })
-
-  it('very_stale ~29h fixture: cautious headline and low confidence', () => {
-    const advice = adviceFor(staleForecast, now)
-    expect(advice.headlineKey).toBe('v_check')
-    expect(advice.displayConfidence).toBe('low')
-    expect(advice.showStaleBanner).toBe(true)
-    expect(advice.mutedCatchPill).toBe(true)
-    expect(advice.headlineKey).not.toBe('ch_good')
-    expect(advice.headlineKey).not.toBe('v_go')
-  })
-
-  it('headline and confidence never disagree on very_stale', () => {
-    const advice = adviceFor(staleForecast, now)
-    const optimisticHeadlines = ['ch_good', 'v_go', 'ch_ok']
-    expect(optimisticHeadlines).not.toContain(advice.headlineKey)
-    expect(advice.displayConfidence).toBe('low')
-  })
-
-  it('severe override unchanged', () => {
-    const severe = {
-      ...calmForecast,
-      weather: { ...calmForecast.weather, state: 'severe' as const, severeWarning: true },
-    }
-    const best = bestReachable(severe.zones, boat)
-    const advice = getTodayAdvice({
-      heroKind: 'severe',
-      bestZone: best,
-      weather: severe.weather,
-      staleness: 'fresh',
+  it('AC2: stale ~30h → CAUTION never GO, low confidence, refresh primary', () => {
+    const advice = getTodayAdvice(staleForecast, new Date('2026-06-07T03:12:00Z'), {
+      online: true,
     })
-    expect(advice.headlineKey).toBe('v_stop')
-    expect(advice.showStaleBanner).toBe(false)
+    expect(advice.decision).toBe('CAUTION')
+    expect(advice.decision).not.toBe('GO')
+    expect(advice.confidence).toBe('low')
+    expect(advice.staleness).toBe('very_stale')
+    expect(advice.primaryAction).toBe('refresh')
+    expect(advice.mutedCatchPill).toBe(true)
+  })
+
+  it('AC3: severe → NO_GO, severe screen state', () => {
+    const advice = getTodayAdvice(severeForecast, new Date('2026-06-07T06:00:00Z'))
+    expect(advice.decision).toBe('NO_GO')
+    expect(advice.screenState).toBe('severe')
+    expect(advice.decisionReasonKey).toBe('decisionReason_unsafe')
+  })
+
+  it('AC4: stronger zone out of range flag', () => {
+    const advice = getTodayAdvice(calmForecast, new Date('2026-06-07T06:00:00Z'))
+    expect(advice.bestZone?.id).toBe('KL-712')
+    expect(advice.strongerOutOfRange).toBe(true)
+  })
+
+  it('stale caps confidence at fair when under 24h', () => {
+    const advice = getTodayAdvice(calmForecast, new Date('2026-06-07T14:00:00Z'))
+    expect(advice.staleness).toBe('stale')
+    expect(advice.confidence).toBe('fair')
+    expect(advice.decision).toBe('CAUTION')
+  })
+
+  it('no reachable catch above low → NO_GO', () => {
+    const lowOnly = {
+      ...calmForecast,
+      zones: calmForecast.zones.filter((z) => z.id === 'KL-455'),
+    }
+    const advice = getTodayAdvice(lowOnly, new Date('2026-06-07T06:00:00Z'))
+    expect(advice.decision).toBe('NO_GO')
+    expect(advice.decisionReasonKey).toBe('decisionReason_no_reachable')
+  })
+
+  it('worth includes fuel estimate without profit', () => {
+    const advice = getTodayAdvice(calmForecast, new Date('2026-06-07T06:00:00Z'))
+    expect(advice.worth?.fuelLitres).toBe(24)
+    expect(advice.worth?.fuelCost).toBe(2280)
+    expect(advice.worth?.currency).toBe('INR')
+  })
+
+  it('offline stale: navigate primary, refresh disabled', () => {
+    const advice = getTodayAdvice(staleForecast, new Date('2026-06-07T03:12:00Z'), {
+      online: false,
+    })
+    expect(advice.primaryAction).toBe('navigate')
+    expect(advice.canRefresh).toBe(false)
   })
 })

@@ -35,6 +35,12 @@ export function DevPreview() {
               </option>
             ))}
           </select>
+          {fixture !== 'calm' && (
+            <span className="text-xs font-semibold text-amber">
+              Day picker demo needs fixture &quot;calm&quot; — other fixtures ignore the
+              selected day.
+            </span>
+          )}
         </label>
         <button
           type="button"

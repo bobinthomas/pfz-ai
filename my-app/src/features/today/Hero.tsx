@@ -3,9 +3,9 @@ import {
   Check,
   ChevronDown,
   Clock,
-  Compass,
   Fish,
   MessageCircleQuestion,
+  RefreshCw,
   Ship,
 } from 'lucide-react'
 import { useId, useState } from 'react'
@@ -13,70 +13,60 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import {
   confidenceLabelKey,
-  getTodayAdvice,
-  strongerOutOfRange,
-  type Boat,
-  type Coast,
-  type StalenessLevel,
-  type Weather,
+  type Forecast,
+  type TodayAdviceView,
   type Zone,
 } from '@/domain'
 import { formatRelativeTime } from '@/lib/format/time'
 import { formatEta } from '@/lib/utils/bearing'
-import { HERO_GRADIENTS } from '@/lib/utils/heroVariant'
 import { tierBg, tierColor } from '@/lib/utils/tier'
 import { ConfidenceBar } from '@/components/ui/ConfidenceBar'
-import type { HeroKind } from './heroKind'
 import { tierPillLabel } from './tierLabels'
-import { MapFullView } from './MapFullView'
 import { zoneWhyPoints } from './zoneWhyPoints'
 
 interface HeroProps {
-  heroKind: HeroKind
+  advice: TodayAdviceView
+  forecast: Forecast
   bestZone: Zone | null
-  allZones: Zone[]
-  coast: Coast
-  boat?: Boat
-  weather: Weather
-  dataStaleness: StalenessLevel
-  generatedAt: string
+  isFetching: boolean
+  onRefresh: () => void
 }
 
-const GRADIENT_MAP = {
-  go: HERO_GRADIENTS.go,
-  caution: HERO_GRADIENTS.caution,
-  stop: HERO_GRADIENTS.stop,
-  neutral: 'var(--hero-neutral)',
+const DECISION_GRADIENT = {
+  GO: 'var(--hero-go)',
+  CAUTION: 'var(--hero-caution)',
+  NO_GO: 'var(--hero-stop)',
 } as const
 
 export function Hero({
-  heroKind,
+  advice,
+  forecast,
   bestZone,
-  allZones,
-  coast,
-  boat,
-  weather,
-  dataStaleness,
-  generatedAt,
+  isFetching,
+  onRefresh,
 }: HeroProps) {
   const { t } = useTranslation(['today', 'confidence', 'species', 'gear'])
   const [whyOpen, setWhyOpen] = useState(false)
-  const [mapOpen, setMapOpen] = useState(false)
   const whyPanelId = useId()
   const now = new Date()
+  const boat = forecast.boat
 
-  const advice = getTodayAdvice({
-    heroKind,
-    bestZone,
-    weather,
-    staleness: dataStaleness,
-  })
+  const gradient =
+    advice.decision === 'GO'
+      ? DECISION_GRADIENT.GO
+      : advice.decision === 'CAUTION'
+        ? DECISION_GRADIENT.CAUTION
+        : advice.decision === 'NO_GO' || advice.screenState === 'severe'
+          ? DECISION_GRADIENT.NO_GO
+          : 'var(--hero-neutral)'
 
-  const showSpot = heroKind === 'normal' && bestZone?.catch
-  const showWhy = heroKind === 'normal' && !!bestZone
-  const outOfRangeNote =
-    heroKind === 'normal' && boat && strongerOutOfRange(allZones, boat)
+  const showBestSpot =
+    advice.screenState === 'normal' &&
+    advice.decision !== 'NO_GO' &&
+    bestZone?.catch &&
+    boat
 
+  const showWhy = showBestSpot
   const gearLabel = boat?.gear.map((g) => t(`gear:${g}`)).join(' · ') ?? ''
 
   const whyPoints = bestZone
@@ -92,14 +82,29 @@ export function Hero({
 
   const catchTier = bestZone?.catch?.tier ?? 'nodata'
 
+  function handleNavigate() {
+    if (!bestZone) return
+    const { lat, lng } = bestZone.center
+    window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank', 'noopener')
+  }
+
+  const decisionLabel =
+    advice.decision === 'GO'
+      ? t('decisionGo')
+      : advice.decision === 'CAUTION'
+        ? t('decisionCaution')
+        : advice.decision === 'NO_GO'
+          ? t('decisionNoGo')
+          : null
+
   return (
     <section
       className="overflow-hidden rounded-[22px] text-white shadow-[0_16px_40px_-20px_rgba(13,34,54,0.5)]"
-      style={{ background: GRADIENT_MAP[advice.gradient] }}
+      style={{ background: gradient }}
       aria-labelledby="hero-heading"
     >
       <div className="px-6 py-4 sm:px-7 sm:py-5">
-        {advice.showStaleBanner && (
+        {advice.staleness !== 'fresh' && advice.screenState !== 'noBoat' && (
           <div
             className="mb-4 flex items-start gap-3 rounded-[14px] border border-white/35 bg-white/20 px-4 py-3"
             role="status"
@@ -107,7 +112,11 @@ export function Hero({
             <Clock className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
             <p className="text-[15px] font-bold leading-snug">
               {t('staleAdviceBanner', {
-                age: formatRelativeTime(generatedAt, now, (k, o) => t(k, o)),
+                age: formatRelativeTime(
+                  forecast.meta.generatedAt,
+                  now,
+                  (k, o) => t(k, o),
+                ),
               })}
             </p>
           </div>
@@ -128,28 +137,40 @@ export function Hero({
               </span>
             )}
 
-            <h1
-              id="hero-heading"
-              className="mt-3 font-display text-[clamp(2rem,5vw,2.875rem)] font-extrabold leading-[1.04] tracking-tight [text-shadow:0_1px_2px_rgba(13,34,54,0.35)]"
-            >
-              {t(advice.headlineKey)}
-            </h1>
-
-            <p className="mt-2 text-[17.5px] leading-snug opacity-95 [text-shadow:0_1px_2px_rgba(13,34,54,0.3)]">
-              {t(advice.sublineKey)}
-            </p>
-
-            {outOfRangeNote && (
-              <p className="mt-2 text-sm font-semibold opacity-90">{t('rangeOut')}</p>
+            {decisionLabel && (
+              <div
+                id="hero-heading"
+                className="mt-3 font-display text-[clamp(2rem,5vw,2.75rem)] font-extrabold uppercase leading-[1.04] tracking-tight [text-shadow:0_1px_2px_rgba(13,34,54,0.35)]"
+              >
+                {decisionLabel}
+              </div>
             )}
 
-            {heroKind === 'noBoat' && (
-              <Link
-                to="/settings"
-                className="mt-4 inline-flex min-h-[var(--touch-primary)] items-center rounded-[13px] bg-white/20 px-5 font-bold hover:bg-white/28"
-              >
-                {t('noBoatAction')}
-              </Link>
+            {advice.screenState === 'noBoat' && (
+              <>
+                <h1
+                  id="hero-heading"
+                  className="mt-3 font-display text-[clamp(1.75rem,4vw,2.25rem)] font-extrabold leading-tight"
+                >
+                  {t('noBoatTitle')}
+                </h1>
+                <Link
+                  to="/settings"
+                  className="mt-4 inline-flex min-h-[var(--touch-primary)] items-center rounded-[13px] bg-white/20 px-5 font-bold hover:bg-white/28"
+                >
+                  {t('noBoatAction')}
+                </Link>
+              </>
+            )}
+
+            {advice.decisionReasonKey && advice.screenState !== 'noBoat' && (
+              <p className="mt-2 text-[17.5px] leading-snug opacity-95 [text-shadow:0_1px_2px_rgba(13,34,54,0.3)]">
+                {t(advice.decisionReasonKey)}
+              </p>
+            )}
+
+            {advice.strongerOutOfRange && (
+              <p className="mt-2 text-sm font-semibold opacity-90">{t('rangeOut')}</p>
             )}
 
             {showWhy && (
@@ -172,7 +193,7 @@ export function Hero({
             )}
           </div>
 
-          {showSpot && bestZone?.catch && boat && (
+          {showBestSpot && bestZone?.catch && boat && (
             <div className="flex min-w-0 flex-[0_1_400px] flex-col rounded-[18px] border border-white/26 bg-white/16 p-4">
               <div className="min-w-0">
                 <div className="text-xs font-extrabold uppercase tracking-wider opacity-90">
@@ -218,43 +239,85 @@ export function Hero({
                     {tierPillLabel(catchTier, (k) => t(k))}
                   </span>
 
-                  {advice.displayConfidence && (
+                  {advice.confidence && (
                     <ConfidenceBar
                       compact
-                      level={advice.displayConfidence}
+                      level={advice.confidence}
                       heading={t('howSure')}
                       label={t(
-                        `confidence:${confidenceLabelKey(advice.displayConfidence)}`,
+                        `confidence:${confidenceLabelKey(advice.confidence)}`,
                       )}
                     />
                   )}
                 </div>
+
+                {advice.worth && (
+                  <div className="mt-3 rounded-xl bg-white/14 px-3 py-2.5">
+                    <div className="text-[11px] font-extrabold uppercase tracking-wide opacity-85">
+                      {t('worthTrip')}
+                    </div>
+                    <div className="mt-0.5 text-[15px] font-bold">
+                      {t(`worth_${advice.worth.verdict}`)} · ≈{' '}
+                      {advice.worth.fuelLitres} L · ≈ ₹{advice.worth.fuelCost}{' '}
+                      {t('worthRoundTrip')}
+                    </div>
+                  </div>
+                )}
               </div>
-              <button
-                type="button"
-                onClick={() => setMapOpen(true)}
-                className="mt-4 flex min-h-[var(--touch-min)] w-full items-center justify-center gap-2 rounded-[13px] bg-white font-bold text-navy hover:bg-white/92 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-              >
-                <Compass className="h-5 w-5" aria-hidden />
-                {t('showMap')}
-              </button>
-              <MapFullView
-                open={mapOpen}
-                onClose={() => setMapOpen(false)}
-                coast={coast}
-                zones={allZones}
-                boat={boat}
-                weather={weather}
-              />
+
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                {advice.primaryAction === 'refresh' ? (
+                  <>
+                    <button
+                      type="button"
+                      disabled={!advice.canRefresh || isFetching}
+                      onClick={onRefresh}
+                      className="flex min-h-[var(--touch-primary)] flex-1 items-center justify-center gap-2 rounded-[13px] bg-white font-bold text-navy hover:bg-white/92 disabled:opacity-60"
+                    >
+                      <RefreshCw
+                        className={`h-5 w-5 ${isFetching ? 'animate-spin' : ''}`}
+                        aria-hidden
+                      />
+                      {advice.canRefresh ? t('getReading') : t('connectToUpdate')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNavigate}
+                      className="flex min-h-[var(--touch-min)] items-center justify-center gap-2 rounded-[13px] border border-white/40 bg-white/12 px-4 font-bold hover:bg-white/20"
+                    >
+                      {t('navigate')}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleNavigate}
+                      className="flex min-h-[var(--touch-primary)] flex-1 items-center justify-center gap-2 rounded-[13px] bg-white font-bold text-navy hover:bg-white/92"
+                    >
+                      {t('navigate')}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!advice.canRefresh || isFetching}
+                      onClick={onRefresh}
+                      className="flex min-h-[var(--touch-min)] items-center justify-center rounded-[13px] border border-white/40 bg-white/12 px-4 hover:bg-white/20 disabled:opacity-60"
+                      aria-label={advice.canRefresh ? t('getReading') : t('connectToUpdate')}
+                    >
+                      <RefreshCw
+                        className={`h-5 w-5 ${isFetching ? 'animate-spin' : ''}`}
+                        aria-hidden
+                      />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>
 
         {whyOpen && showWhy && (
-          <div
-            id={whyPanelId}
-            className="mt-3 rounded-[15px] bg-white/13 p-4"
-          >
+          <div id={whyPanelId} className="mt-3 rounded-[15px] bg-white/13 p-4">
             <ul className="grid list-none gap-3 p-0 sm:grid-cols-2">
               {whyPoints.map((point) => (
                 <li

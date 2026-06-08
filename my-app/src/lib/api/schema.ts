@@ -57,6 +57,13 @@ export const forecastSchema = z.object({
       rangeKm: z.number(),
       gear: z.array(z.string()),
       maxDepthM: z.number(),
+      fuelLitresPerKm: z.number().optional(),
+    })
+    .optional(),
+  config: z
+    .object({
+      fuelPricePerLitre: z.number(),
+      currency: z.string(),
     })
     .optional(),
   weather: z.object({
