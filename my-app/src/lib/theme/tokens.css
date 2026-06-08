@@ -47,10 +47,13 @@
   --touch-min: 48px;
   --touch-primary: 56px;
 
-  /* Hero gradients (darker stops for sunlight contrast) */
+  /* Hero gradients — tier-first (v41), decision badge uses go/caution/stop */
+  --hero-good: linear-gradient(150deg, #2aa863, #15743f);
+  --hero-ok: linear-gradient(150deg, #2a8aa0, #155f72);
+  --hero-low: linear-gradient(150deg, #cf8612, #9a5f06);
   --hero-go: linear-gradient(150deg, #1a7a47, #0d4d2c);
   --hero-caution: linear-gradient(150deg, #9a6208, #6e4505);
-  --hero-stop: linear-gradient(150deg, #b83828, #7a2218);
+  --hero-stop: linear-gradient(150deg, #cc4434, #8f2a20);
   --hero-neutral: linear-gradient(150deg, #7a8790, #4d5f6b);
 
   /* Course map */

@@ -8,9 +8,11 @@ import {
   getZoneDisplayAdvice,
   groupZonesForTabs,
   isReachable,
+  zoneFuelEstimate,
   zoneTabIndicatorDots,
   zoneTabLabelKey,
   type Boat,
+  type ForecastConfig,
   type StalenessLevel,
   type Zone,
   type ZoneTabGroupKey,
@@ -23,6 +25,8 @@ import { tierPillLabel } from './tierLabels'
 interface ZonesRailProps {
   zones: Zone[]
   boat: Boat
+  config?: ForecastConfig
+  bestZoneId?: string
   disabled?: boolean
   dataStaleness: StalenessLevel
   onSelect: (zone: Zone) => void
@@ -52,6 +56,8 @@ interface ZonePanelProps {
   zone: Zone
   letter: string
   boat: Boat
+  config?: ForecastConfig
+  isBest?: boolean
   disabled?: boolean
   isLast: boolean
   muted?: boolean
@@ -64,6 +70,8 @@ function ZonePanel({
   zone,
   letter,
   boat,
+  config,
+  isBest,
   disabled,
   isLast,
   muted,
@@ -101,6 +109,7 @@ function ZonePanel({
   const displayLevel = advice.displayConfidence
   const badgeColor = muted || advice.mutedCatchPill ? 'var(--ink2)' : tierColor(tier)
   const suitsGear = gearFits(zone, boat)
+  const fuel = zoneFuelEstimate(zone, boat, config)
 
   return (
     <button
@@ -121,7 +130,14 @@ function ZonePanel({
           {letter}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="font-display text-lg font-bold text-ink">{zone.name}</div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-display text-lg font-bold text-ink">{zone.name}</span>
+            {isBest && (
+              <span className="rounded-[var(--radius-pill)] bg-teal/15 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-teal">
+                {t('bestMarker')}
+              </span>
+            )}
+          </div>
           <div className="text-xs font-semibold text-ink2">
             {zone.id} · {zone.distanceKm} km {zone.bearing}
             {muted && ` · ${t('tooFar')}`}
@@ -156,6 +172,12 @@ function ZonePanel({
                 {t('suitsNets')}
               </span>
             )}
+            <span className="inline-flex rounded-[var(--radius-pill)] bg-soft px-2.5 py-1 text-xs font-extrabold text-ink2">
+              {t('zoneFuelEstimate', {
+                cost: fuel.fuelCost,
+                km: fuel.roundTripKm,
+              })}
+            </span>
           </div>
         </div>
       </div>
@@ -185,6 +207,8 @@ function ZonePanel({
 export function ZonesRail({
   zones,
   boat,
+  config,
+  bestZoneId,
   disabled,
   dataStaleness,
   onSelect,
@@ -302,6 +326,8 @@ export function ZonesRail({
                 zone={zone}
                 letter={letters.get(zone.id) ?? '?'}
                 boat={boat}
+                config={config}
+                isBest={zone.id === bestZoneId}
                 disabled={disabled}
                 isLast={idx === inRange.length - 1 && beyond.length === 0}
                 dataStaleness={dataStaleness}
@@ -322,6 +348,7 @@ export function ZonesRail({
                     zone={zone}
                     letter={letters.get(zone.id) ?? '?'}
                     boat={boat}
+                    config={config}
                     disabled={disabled}
                     muted
                     isLast={idx === beyond.length - 1}

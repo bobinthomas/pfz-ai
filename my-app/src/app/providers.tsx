@@ -1,6 +1,7 @@
 import { QueryClient } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { useEffect, type ReactNode } from 'react'
+import { FORECAST_MOCK_CACHE_VERSION } from '@/lib/api/queries'
 import { initConnectivityListener } from '@/lib/offline/connectivity'
 import { idbPersister } from '@/lib/offline/persistence'
 import '@/lib/i18n/config'
@@ -23,7 +24,11 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{ persister: idbPersister, maxAge: 1000 * 60 * 60 * 24 }}
+      persistOptions={{
+        persister: idbPersister,
+        maxAge: 1000 * 60 * 60 * 24,
+        buster: FORECAST_MOCK_CACHE_VERSION,
+      }}
     >
       {children}
     </PersistQueryClientProvider>

@@ -1,6 +1,10 @@
 import { boatById } from '@/lib/boat/boats'
 import { coastById } from '@/lib/coast/coasts'
 import type { Forecast, ProblemDetail } from '@/domain/types'
+import {
+  buildDateScenarioForecast,
+  demoScenarioForDate,
+} from './dateScenarios'
 import calm from './fixtures/forecast.calm.json'
 import severe from './fixtures/forecast.severe.json'
 import stale from './fixtures/forecast.stale.json'
@@ -46,16 +50,27 @@ export function forecastUnavailableProblem(): ProblemDetail {
   }
 }
 
+function resolveMockBase(params: ForecastQueryParams): Forecast {
+  const fixture = params.fixture ?? 'calm'
+
+  if (fixture === 'calm') {
+    const scenario = demoScenarioForDate(params.date)
+    return buildDateScenarioForecast(scenario)
+  }
+
+  const base = (FIXTURES[fixture] ?? calm) as Forecast
+  return JSON.parse(JSON.stringify(base)) as Forecast
+}
+
 export function buildMockForecast(params: ForecastQueryParams): Forecast {
   if (params.fixture === 'error') {
     throw forecastUnavailableProblem()
   }
 
   const fixture = params.fixture ?? 'calm'
-  const base = (FIXTURES[fixture] ?? calm) as Record<string, unknown>
+  const base = resolveMockBase(params)
   const coast = coastById(params.coastId)
-  const harbour =
-    (base.coast as { harbour?: unknown })?.harbour ?? calm.coast.harbour
+  const harbour = base.coast?.harbour ?? calm.coast.harbour
   const selectedBoat = boatById(params.boatId) ?? calm.boat
 
   return {

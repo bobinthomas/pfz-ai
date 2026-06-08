@@ -3,8 +3,7 @@ import { NavBar } from '@/components/layout/NavBar'
 import { LanguageGate } from '@/components/ui/LanguageGate'
 import { NativeReviewBanner } from '@/components/ui/NativeReviewBanner'
 import { AssistantFab } from '@/features/assistant/AssistantFab'
-import { bestReachable, isSafetyBlocked } from '@/domain'
-import { getStalenessFromMeta } from '@/domain/staleness'
+import { bestReachable, getTodayAdvice, isSafetyBlocked } from '@/domain'
 import { useAppForecast } from '@/lib/api/useAppForecast'
 import { useConnectivityStore } from '@/lib/offline/connectivity'
 import { useSafetyStore } from '@/lib/offline/safetyStore'
@@ -15,7 +14,7 @@ import { BestSpotSection } from './BestSpotSection'
 import { CoastDateSelectors } from './CoastDateSelectors'
 import { ErrorCard } from './ErrorCard'
 import { Hero } from './Hero'
-import { requireBoat, resolveHeroKind } from './heroKind'
+import { requireBoat } from './heroKind'
 import { TodaySkeleton } from './TodaySkeleton'
 import { TrustStrip } from './TrustStrip'
 import { WeatherCard } from './WeatherCard'
@@ -74,9 +73,8 @@ export function TodayScreen() {
   const boat = data.boat
   const best = boat ? bestReachable(data.zones, boat) : null
   const severe = isSafetyBlocked(data.weather)
-  const heroKind = resolveHeroKind(data, best)
-  const dataStaleness = getStalenessFromMeta(data.meta, new Date())
-  const canShowMap = boat && heroKind !== 'noBoat'
+  const advice = getTodayAdvice(data, new Date(), { online })
+  const canShowMap = boat && advice.screenState !== 'noBoat'
 
   return (
     <div className="min-h-svh bg-bg pb-28">
@@ -87,17 +85,14 @@ export function TodayScreen() {
 
         <main id="main-content">
           <Hero
-            heroKind={heroKind}
+            advice={advice}
+            forecast={data}
             bestZone={best}
-            allZones={data.zones}
-            coast={data.coast}
-            boat={boat}
-            weather={data.weather}
-            dataStaleness={dataStaleness}
-            generatedAt={data.meta.generatedAt}
+            isFetching={isFetching}
+            onRefresh={() => void refetch()}
           />
 
-          {heroKind !== 'noBoat' && (
+          {advice.screenState !== 'noBoat' && (
             <div className="mt-4 grid items-start gap-4 min-[980px]:grid-cols-2 min-[980px]:gap-5">
               <div className="flex min-w-0 flex-col gap-4">
                 {canShowMap && (
@@ -106,13 +101,14 @@ export function TodayScreen() {
                     zones={data.zones}
                     boat={requireBoat(boat)}
                     weather={data.weather}
-                    dataStaleness={dataStaleness}
+                    dataStaleness={advice.staleness}
                   />
                 )}
                 <WeatherCard
                   weather={data.weather}
                   meta={data.meta}
-                  dataStaleness={dataStaleness}
+                  weatherVerdict={advice.weatherVerdict}
+                  dataStaleness={advice.staleness}
                   isOffline={!online}
                 />
               </div>
@@ -122,8 +118,10 @@ export function TodayScreen() {
                   <ZonesRail
                     zones={data.zones}
                     boat={boat}
+                    config={data.config}
+                    bestZoneId={best?.id}
                     disabled={severe}
-                    dataStaleness={dataStaleness}
+                    dataStaleness={advice.staleness}
                     onSelect={(z) => {
                       if (z.dataStatus === 'ok' && !severe) setSelectedZone(z)
                     }}
@@ -159,7 +157,8 @@ export function TodayScreen() {
             }
             boat={boat}
             weather={data.weather}
-            dataStaleness={dataStaleness}
+            config={data.config}
+            dataStaleness={advice.staleness}
             onClose={() => setSelectedZone(null)}
           />
         )}

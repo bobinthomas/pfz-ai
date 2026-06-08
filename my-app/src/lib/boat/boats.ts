@@ -7,6 +7,7 @@ export const BOAT_CATALOG: Boat[] = [
     rangeKm: 50,
     gear: ['purse_seine'],
     maxDepthM: 80,
+    fuelLitresPerKm: 0.4,
   },
   {
     id: 'KER-445-12',
@@ -14,6 +15,7 @@ export const BOAT_CATALOG: Boat[] = [
     rangeKm: 35,
     gear: ['gillnet'],
     maxDepthM: 50,
+    fuelLitresPerKm: 0.35,
   },
   {
     id: 'KER-118-07',
@@ -21,6 +23,7 @@ export const BOAT_CATALOG: Boat[] = [
     rangeKm: 70,
     gear: ['longline', 'purse_seine'],
     maxDepthM: 100,
+    fuelLitresPerKm: 0.45,
   },
 ]
 

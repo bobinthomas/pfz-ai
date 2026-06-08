@@ -10,9 +10,13 @@ export function gearFits(zone: Zone, boat: Boat): boolean {
 }
 
 export function rankScore(zone: Zone): number {
-  const catchScore = zone.catch?.score ?? 0
-  const confScore = zone.confidence?.score ?? 0
-  return catchScore * 1000 + confScore
+  return zone.catch?.score ?? 0
+}
+
+function compareByRank(a: Zone, b: Zone): number {
+  const catchDiff = rankScore(b) - rankScore(a)
+  if (catchDiff !== 0) return catchDiff
+  return (b.confidence?.score ?? 0) - (a.confidence?.score ?? 0)
 }
 
 export function bestReachable(zones: Zone[], boat: Boat): Zone | null {
@@ -20,17 +24,13 @@ export function bestReachable(zones: Zone[], boat: Boat): Zone | null {
     (z) => z.dataStatus === 'ok' && isReachable(z, boat) && z.catch,
   )
   if (candidates.length === 0) return null
-  return candidates.reduce((best, z) =>
-    rankScore(z) > rankScore(best) ? z : best,
-  )
+  return candidates.reduce((best, z) => (compareByRank(z, best) < 0 ? z : best))
 }
 
 export function strongestOverall(zones: Zone[]): Zone | null {
   const candidates = zones.filter((z) => z.dataStatus === 'ok' && z.catch)
   if (candidates.length === 0) return null
-  return candidates.reduce((best, z) =>
-    rankScore(z) > rankScore(best) ? z : best,
-  )
+  return candidates.reduce((best, z) => (compareByRank(z, best) < 0 ? z : best))
 }
 
 export function strongerOutOfRange(zones: Zone[], boat: Boat): boolean {
@@ -38,7 +38,16 @@ export function strongerOutOfRange(zones: Zone[], boat: Boat): boolean {
   const strongest = strongestOverall(zones)
   if (!strongest || !best) return false
   if (isReachable(strongest, boat)) return false
-  return rankScore(strongest) > rankScore(best)
+  return compareByRank(strongest, best) < 0
+}
+
+export function hasReachableCatchAboveLow(zones: Zone[], boat: Boat): boolean {
+  return zones.some(
+    (z) =>
+      z.dataStatus === 'ok' &&
+      isReachable(z, boat) &&
+      (z.catch?.tier === 'good' || z.catch?.tier === 'ok'),
+  )
 }
 
 export function sortZones(zones: Zone[], boat: Boat): Zone[] {
@@ -51,7 +60,7 @@ export function sortZones(zones: Zone[], boat: Boat): Zone[] {
     const t = tier(a) - tier(b)
     if (t !== 0) return t
     if (a.dataStatus === 'low_data' || b.dataStatus === 'low_data') return 0
-    return rankScore(b) - rankScore(a)
+    return compareByRank(a, b)
   })
 }
 

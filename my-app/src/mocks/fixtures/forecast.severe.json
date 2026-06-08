@@ -15,8 +15,10 @@
     "name": "Sea Queen II",
     "rangeKm": 50,
     "gear": ["purse_seine"],
-    "maxDepthM": 80
+    "maxDepthM": 80,
+    "fuelLitresPerKm": 0.4
   },
+  "config": { "fuelPricePerLitre": 95, "currency": "INR" },
   "weather": {
     "state": "severe",
     "windKts": 42,

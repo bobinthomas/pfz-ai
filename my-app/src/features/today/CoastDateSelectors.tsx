@@ -1,11 +1,14 @@
 import { Calendar, ChevronRight, MapPin } from 'lucide-react'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Drawer } from '@/components/ui/Drawer'
 import { COASTS, coastById } from '@/lib/coast/coasts'
 import { buildDateOptions } from '@/lib/format/dateOptions'
 import { formatDay } from '@/lib/format/time'
+import { useDevPreviewStore } from '@/lib/dev/devPreviewStore'
 import { useForecastSelectionStore } from '@/lib/forecast/forecastSelectionStore'
+import { demoScenarioHintKey } from '@/mocks/dateScenarios'
+import { useMockApi } from '@/mocks/fixtureData'
 
 interface CoastDateSelectorsProps {
   stub?: boolean
@@ -69,14 +72,22 @@ export function CoastDateSelectors({ stub }: CoastDateSelectorsProps) {
   const date = useForecastSelectionStore((s) => s.date)
   const setCoastId = useForecastSelectionStore((s) => s.setCoastId)
   const setDate = useForecastSelectionStore((s) => s.setDate)
+  const syncDateToToday = useForecastSelectionStore((s) => s.syncDateToToday)
+
+  useEffect(() => {
+    syncDateToToday()
+  }, [syncDateToToday])
 
   const [coastOpen, setCoastOpen] = useState(false)
   const [dateOpen, setDateOpen] = useState(false)
 
   const coast = coastById(coastId)
   const dayLabel = formatDay(date, new Date(), i18n.language, (k, o) => t(k, o))
+  const fixture = useDevPreviewStore((s) => s.fixture)
   const dateOptions = useMemo(() => buildDateOptions(), [])
   const translate = (k: string, o?: Record<string, string | number>) => t(k, o)
+  const showDemoHints =
+    (useMockApi() || import.meta.env.DEV) && (fixture === 'calm' || !fixture)
 
   return (
     <>
@@ -140,6 +151,7 @@ export function CoastDateSelectors({ stub }: CoastDateSelectorsProps) {
           {dateOptions.map((iso) => {
             const selected = iso === date
             const label = formatDay(iso, new Date(), i18n.language, translate)
+            const hint = showDemoHints ? t(demoScenarioHintKey(iso)) : null
             return (
               <li key={iso}>
                 <button
@@ -148,14 +160,23 @@ export function CoastDateSelectors({ stub }: CoastDateSelectorsProps) {
                     setDate(iso)
                     setDateOpen(false)
                   }}
-                  className={`flex min-h-[var(--touch-primary)] w-full items-center justify-between px-4 py-3 text-left font-display text-lg font-bold ${
+                  className={`flex min-h-[var(--touch-primary)] w-full items-center justify-between gap-3 px-4 py-3 text-left ${
                     selected ? 'bg-soft text-teal' : 'text-ink hover:bg-soft/70'
                   }`}
                   aria-pressed={selected}
                 >
-                  {label}
+                  <span>
+                    <span className="block font-display text-lg font-bold">{label}</span>
+                    {hint && (
+                      <span className="mt-0.5 block text-sm font-semibold text-ink2">
+                        {hint}
+                      </span>
+                    )}
+                  </span>
                   {selected && (
-                    <span className="text-sm font-semibold text-teal">{t('selected')}</span>
+                    <span className="shrink-0 text-sm font-semibold text-teal">
+                      {t('selected')}
+                    </span>
                   )}
                 </button>
               </li>

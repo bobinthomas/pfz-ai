@@ -2,13 +2,14 @@ import { Clock, Sun, Thermometer, Waves, Wind } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ForecastMeta, Weather } from '@/domain/types'
+import type { ForecastMeta, Weather, WeatherVerdict } from '@/domain/types'
 import type { StalenessLevel } from '@/domain/staleness'
 import { formatRelativeTime } from '@/lib/format/time'
 
 interface WeatherCardProps {
   weather: Weather
   meta: ForecastMeta
+  weatherVerdict: WeatherVerdict
   dataStaleness: StalenessLevel
   isOffline?: boolean
 }
@@ -16,6 +17,7 @@ interface WeatherCardProps {
 export function WeatherCard({
   weather,
   meta,
+  weatherVerdict,
   dataStaleness,
   isOffline,
 }: WeatherCardProps) {
@@ -34,8 +36,13 @@ export function WeatherCard({
     return () => clearInterval(id)
   }, [meta, t])
 
-  const isRough = weather.state === 'rough' || weather.state === 'severe'
   const warn = dataStaleness !== 'fresh' || isOffline
+  const verdictKey =
+    weatherVerdict === 'unsafe'
+      ? 'weatherVerdictUnsafe'
+      : weatherVerdict === 'caution'
+        ? 'weatherVerdictCaution'
+        : 'weatherVerdictSafe'
 
   return (
     <section aria-labelledby="weather-heading">
@@ -44,6 +51,9 @@ export function WeatherCard({
         <h2 id="weather-heading" className="font-display text-[19px] font-bold text-ink">
           {t('sea')}
         </h2>
+        <span className="rounded-[var(--radius-pill)] bg-soft px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-ink2">
+          {t('supporting')}
+        </span>
         <span
           className={`ml-auto inline-flex items-center gap-1.5 text-[13px] font-bold ${
             warn ? 'text-caution' : 'text-ink2'
@@ -56,7 +66,7 @@ export function WeatherCard({
       <div className="rounded-[20px] border-[1.5px] border-line bg-card p-4">
         <div className="flex items-center gap-3.5">
           <div className="grid h-14 w-14 shrink-0 place-items-center rounded-[15px] bg-soft text-teal">
-            {isRough ? (
+            {weatherVerdict !== 'safe' ? (
               <Wind className="h-[26px] w-[26px]" />
             ) : (
               <Sun className="h-[26px] w-[26px]" />
@@ -64,10 +74,7 @@ export function WeatherCard({
           </div>
           <div>
             <div className="font-display text-[21px] font-bold text-ink">
-              {isRough ? t('choppy') : t('calm')}
-            </div>
-            <div className="mt-0.5 text-sm font-medium text-ink2">
-              {isRough ? t('weatherCaution') : t('weatherSafe')}
+              {t(verdictKey)}
             </div>
           </div>
         </div>
