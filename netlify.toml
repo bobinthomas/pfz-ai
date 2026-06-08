@@ -3,6 +3,10 @@
   command = "npm run build"
   publish = "dist"
 
+[build.environment]
+  # Demo deploy: bundle fixtures until a live API is connected.
+  VITE_USE_MOCKS = "true"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

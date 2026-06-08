@@ -1,3 +1,4 @@
+import { buildMockForecast, useMockApi } from '@/mocks/fixtureData'
 import { forecastSchema } from './schema'
 import { parseProblemDetail } from './errors'
 import type { Forecast } from '@/domain/types'
@@ -10,6 +11,11 @@ export interface ForecastParams {
 }
 
 export async function fetchForecast(params: ForecastParams): Promise<Forecast> {
+  if (useMockApi()) {
+    const json = buildMockForecast(params)
+    return forecastSchema.parse(json) as Forecast
+  }
+
   const search = new URLSearchParams({
     coast: params.coastId,
     date: params.date,
