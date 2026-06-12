@@ -1,3 +1,4 @@
+import { withDefaultPresence } from '@/domain/presence'
 import { boatById } from '@/lib/boat/boats'
 import { coastById } from '@/lib/coast/coasts'
 import type { Forecast, ProblemDetail } from '@/domain/types'
@@ -77,6 +78,7 @@ export function buildMockForecast(params: ForecastQueryParams): Forecast {
     ...base,
     date: params.date,
     coast: { id: coast.id, name: coast.name, harbour },
+    zones: withDefaultPresence(base.zones),
     ...(fixture === 'noboat' ? {} : { boat: selectedBoat }),
   } as Forecast
 }

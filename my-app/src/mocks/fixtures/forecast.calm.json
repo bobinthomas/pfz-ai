@@ -45,6 +45,14 @@
       "signals": { "sstC": 28.4, "chlorophyll": 0.42 },
       "species": ["mackerel", "tuna"],
       "gear": ["purse_seine", "longline"],
+      "presence": {
+        "boatCount": 2,
+        "bucket": "quiet",
+        "observedAt": "2026-06-07T05:00:00Z",
+        "source": "proxy",
+        "confidence": "fair"
+      },
+      "catchShare": { "level": "good", "reasonKey": "shareGood" },
       "dataStatus": "ok"
     },
     {
@@ -64,6 +72,14 @@
       "signals": { "sstC": 28.6, "chlorophyll": 0.55 },
       "species": ["tuna"],
       "gear": ["longline"],
+      "presence": {
+        "boatCount": 4,
+        "bucket": "some",
+        "observedAt": "2026-06-07T05:00:00Z",
+        "source": "proxy",
+        "confidence": "fair"
+      },
+      "catchShare": { "level": "good", "reasonKey": "shareGood" },
       "dataStatus": "ok"
     },
     {
@@ -83,6 +99,14 @@
       "signals": { "sstC": 28.2, "chlorophyll": 0.28 },
       "species": ["sardine"],
       "gear": ["purse_seine", "gillnet"],
+      "presence": {
+        "boatCount": 1,
+        "bucket": "quiet",
+        "observedAt": "2026-06-07T05:00:00Z",
+        "source": "proxy",
+        "confidence": "fair"
+      },
+      "catchShare": { "level": "fair", "reasonKey": "shareFair" },
       "dataStatus": "ok"
     },
     {
@@ -102,6 +126,14 @@
       "signals": { "sstC": 28.1, "chlorophyll": 0.15 },
       "species": ["sardine"],
       "gear": ["gillnet"],
+      "presence": {
+        "boatCount": 7,
+        "bucket": "busy",
+        "observedAt": "2026-06-07T05:00:00Z",
+        "source": "proxy",
+        "confidence": "fair"
+      },
+      "catchShare": { "level": "low", "reasonKey": "shareLow" },
       "dataStatus": "ok"
     },
     {

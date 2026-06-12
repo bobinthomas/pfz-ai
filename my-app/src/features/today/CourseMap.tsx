@@ -6,6 +6,7 @@ import {
   confidenceLabelKey,
   displayConfidenceForZone,
   isReachable,
+  presenceColor,
   type Boat,
   type Coast,
   type StalenessLevel,
@@ -30,6 +31,60 @@ interface CourseMapProps {
 const CX = MAP_HARBOUR.x
 const CY = MAP_HARBOUR.y
 
+function MapPresenceIndicator({
+  x,
+  y,
+  markerR,
+  zone,
+  full,
+  label,
+}: {
+  x: number
+  y: number
+  markerR: number
+  zone: Zone
+  full: boolean
+  label: string
+}) {
+  const presence = zone.presence
+  if (presence?.boatCount == null || presence.bucket === 'unknown') return null
+
+  const color = presenceColor(presence.bucket)
+  const countText = `~${presence.boatCount}`
+  const fontSize = full ? 11 : 9
+  const badgeH = full ? 18 : 16
+  const badgeW = 10 + countText.length * (full ? 7 : 6)
+  const badgeY = y + markerR + (full ? 11 : 9)
+
+  return (
+    <g aria-hidden>
+      <title>{label}</title>
+      <rect
+        x={x - badgeW / 2}
+        y={badgeY - badgeH / 2}
+        width={badgeW}
+        height={badgeH}
+        rx={badgeH / 2}
+        fill="var(--card)"
+        stroke={color}
+        strokeWidth="1.5"
+        opacity={0.97}
+      />
+      <text
+        x={x}
+        y={badgeY + (full ? 4 : 3)}
+        fontSize={fontSize}
+        fontWeight="700"
+        fill={color}
+        textAnchor="middle"
+        fontFamily="var(--font-body)"
+      >
+        {countText}
+      </text>
+    </g>
+  )
+}
+
 export function CourseMap({
   coast,
   zones,
@@ -47,19 +102,37 @@ export function CourseMap({
   const harbour = coast.name.split(',')[0]
   const full = size === 'full'
 
+  const bestConfidence = best
+    ? (() => {
+        const level = displayConfidenceForZone(best, dataStaleness)
+        return level
+          ? t(`confidence:${confidenceLabelKey(level)}`)
+          : t('howSure')
+      })()
+    : ''
+
+  const bestBoats =
+    best?.presence?.boatCount != null
+      ? t('presenceCount', { count: best.presence.boatCount })
+      : null
+
   const ariaLabel = best
-    ? t('mapAria', {
-        name: best.name,
-        km: best.distanceKm,
-        bearing: best.bearing,
-        tier: tierPillLabel(best.catch?.tier ?? 'nodata', (k) => t(k)),
-        confidence: (() => {
-          const level = displayConfidenceForZone(best, dataStaleness)
-          return level
-            ? t(`confidence:${confidenceLabelKey(level)}`)
-            : t('howSure')
-        })(),
-      })
+    ? bestBoats
+      ? t('mapAriaWithBoats', {
+          name: best.name,
+          km: best.distanceKm,
+          bearing: best.bearing,
+          tier: tierPillLabel(best.catch?.tier ?? 'nodata', (k) => t(k)),
+          confidence: bestConfidence,
+          boats: bestBoats,
+        })
+      : t('mapAria', {
+          name: best.name,
+          km: best.distanceKm,
+          bearing: best.bearing,
+          tier: tierPillLabel(best.catch?.tier ?? 'nodata', (k) => t(k)),
+          confidence: bestConfidence,
+        })
     : t('zonesToday')
 
   const ringLabelSize = full ? 13 : 11
@@ -194,6 +267,18 @@ export function CourseMap({
                 >
                   {letter}
                 </text>
+                <MapPresenceIndicator
+                  x={p.x}
+                  y={p.y}
+                  markerR={zoneMarkerR}
+                  zone={z}
+                  full={full}
+                  label={
+                    z.presence?.boatCount != null
+                      ? t('presenceCount', { count: z.presence.boatCount })
+                      : t('presenceUnknown')
+                  }
+                />
               </g>
             )
           })}
@@ -234,6 +319,18 @@ export function CourseMap({
               >
                 {letter}
               </text>
+              <MapPresenceIndicator
+                x={p.x}
+                y={p.y}
+                markerR={bestMarkerR}
+                zone={best}
+                full={full}
+                label={
+                  best.presence?.boatCount != null
+                    ? t('presenceCount', { count: best.presence.boatCount })
+                    : t('presenceUnknown')
+                }
+              />
               <g transform={`translate(${midX},${midY})`}>
                 <rect
                   x={full ? -58 : -50}

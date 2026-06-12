@@ -1,3 +1,4 @@
+import { applyPresenceToZone, withDefaultPresence } from '@/domain/presence'
 import { parseLocalDate, todayIsoDate } from '@/lib/format/time'
 import type { Forecast } from '@/domain/types'
 import calm from './fixtures/forecast.calm.json'
@@ -45,6 +46,27 @@ function cloneCalm(): Forecast {
   return JSON.parse(JSON.stringify(calm)) as Forecast
 }
 
+function enrichPresence(f: Forecast, scenario: DemoDateScenario, now: Date): Forecast {
+  let zones = withDefaultPresence(f.zones, now)
+  const recent = hoursAgoIso(0.3, now)
+
+  if (scenario === 'caution_rough') {
+    zones = zones.map((z) =>
+      z.id === 'KL-712' ? applyPresenceToZone(z, 9, recent) : z,
+    )
+  } else if (scenario === 'caution_marginal') {
+    zones = zones.map((z) =>
+      z.id === 'KL-712' ? applyPresenceToZone(z, 14, recent) : z,
+    )
+  } else if (scenario === 'go') {
+    zones = zones.map((z) =>
+      z.id === 'KL-712' ? applyPresenceToZone(z, 2, recent) : z,
+    )
+  }
+
+  return { ...f, zones }
+}
+
 export function demoScenarioHintKey(isoDate: string, now = new Date()): string {
   return `demoDay_${demoScenarioForDate(isoDate, now)}`
 }
@@ -57,12 +79,12 @@ export function buildDateScenarioForecast(
     case 'go': {
       const f = cloneCalm()
       f.meta = { ...f.meta, generatedAt: hoursAgoIso(2, now) }
-      return f
+      return enrichPresence(f, scenario, now)
     }
     case 'caution_stale': {
       const f = cloneCalm()
       f.meta = { ...f.meta, generatedAt: hoursAgoIso(30, now) }
-      return f
+      return enrichPresence(f, scenario, now)
     }
     case 'caution_rough': {
       const f = cloneCalm()
@@ -74,12 +96,12 @@ export function buildDateScenarioForecast(
         severeWarning: false,
       }
       f.meta = { ...f.meta, generatedAt: hoursAgoIso(1, now) }
-      return f
+      return enrichPresence(f, scenario, now)
     }
     case 'no_go_severe': {
       const f = JSON.parse(JSON.stringify(severe)) as Forecast
       f.meta = { ...f.meta, generatedAt: hoursAgoIso(1, now) }
-      return f
+      return enrichPresence(f, scenario, now)
     }
     case 'caution_marginal': {
       const f = cloneCalm()
@@ -94,7 +116,7 @@ export function buildDateScenarioForecast(
         }
       }
       f.meta = { ...f.meta, generatedAt: hoursAgoIso(4, now) }
-      return f
+      return enrichPresence(f, scenario, now)
     }
   }
 }

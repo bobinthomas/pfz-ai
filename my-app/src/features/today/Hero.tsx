@@ -25,6 +25,7 @@ import {
 import { formatRelativeTime } from '@/lib/format/time'
 import { bearingToDegrees, formatEta } from '@/lib/utils/bearing'
 import { tierBg, tierColor } from '@/lib/utils/tier'
+import { PresenceShareChips } from './PresenceShareChips'
 import { tierPillLabel } from './tierLabels'
 import { zoneWhyPoints } from './zoneWhyPoints'
 
@@ -44,19 +45,22 @@ const HERO_GRADIENT: Record<HeroGradient, string> = {
   neutral: 'var(--hero-neutral)',
 }
 
+const HERO_CHIP =
+  'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-white/22 bg-white/16 px-2.5 text-xs font-bold leading-none backdrop-blur-sm'
+
 function DecisionBadge({ decision, t }: { decision: string; t: (k: string) => string }) {
+  if (decision === 'GO') return null
+
   const label =
-    decision === 'GO'
-      ? t('decisionGo')
-      : decision === 'CAUTION'
-        ? t('decisionCaution')
-        : decision === 'NO_GO'
-          ? t('decisionNoGo')
-          : null
+    decision === 'CAUTION'
+      ? t('decisionCaution')
+      : decision === 'NO_GO'
+        ? t('decisionNoGo')
+        : null
   if (!label) return null
 
   return (
-    <span className="inline-flex items-center rounded-[var(--radius-pill)] border border-white/35 bg-white/18 px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide">
+    <span className={`${HERO_CHIP} font-extrabold uppercase tracking-wide`}>
       {label}
     </span>
   )
@@ -111,15 +115,19 @@ export function Hero({
         ? t('emptySub')
         : advice.screenState === 'noReachable'
           ? t('noReachableSub')
-          : bestZone
-            ? t('sub_tmpl', {
-                zone: bestZone.name,
-                km: bestZone.distanceKm,
-                bearing: bestZone.bearing,
-                eta: formatEta(bestZone.etaMins),
-                range: advice.strongerOutOfRange ? t('rangeOut') : t('inRange'),
-              })
-            : null
+          : showBestSpot
+            ? advice.strongerOutOfRange
+              ? t('rangeOut')
+              : t('inRange')
+            : bestZone
+              ? t('sub_tmpl', {
+                  zone: bestZone.name,
+                  km: bestZone.distanceKm,
+                  bearing: bestZone.bearing,
+                  eta: formatEta(bestZone.etaMins),
+                  range: advice.strongerOutOfRange ? t('rangeOut') : t('inRange'),
+                })
+              : null
 
   const weatherChip =
     !severe && advice.screenState === 'normal'
@@ -134,14 +142,14 @@ export function Hero({
       style={{ background: gradient }}
       aria-labelledby="hero-heading"
     >
-      <div className="px-6 py-4 sm:px-7 sm:py-5">
+      <div className="px-5 py-3.5 sm:px-6 sm:py-4">
         {advice.staleness !== 'fresh' && advice.screenState !== 'noBoat' && (
           <div
-            className="mb-4 flex items-start gap-3 rounded-[14px] border border-white/35 bg-white/20 px-4 py-3"
+            className="mb-3 flex items-start gap-2.5 rounded-[14px] border border-white/35 bg-white/20 px-3.5 py-2.5"
             role="status"
           >
-            <Clock className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
-            <p className="text-[15px] font-bold leading-snug">
+            <Clock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <p className="text-sm font-bold leading-snug">
               {t('staleAdviceBanner', {
                 age: formatRelativeTime(
                   forecast.meta.generatedAt,
@@ -153,10 +161,16 @@ export function Hero({
           </div>
         )}
 
-        <div className="flex flex-wrap items-stretch gap-4 sm:gap-5">
-          <div className="flex min-w-0 flex-[1_1_420px] flex-col">
+        <div
+          className={
+            showBestSpot
+              ? 'flex flex-col gap-3 min-[900px]:grid min-[900px]:grid-cols-2 min-[900px]:items-stretch min-[900px]:gap-4'
+              : 'flex flex-col gap-3'
+          }
+        >
+          <div className="flex min-w-0 flex-col min-[900px]:h-full min-[900px]:justify-center">
             {advice.screenState !== 'noBoat' && boat && (
-              <span className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 text-[13px] font-extrabold uppercase tracking-wide opacity-90">
+              <span className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 text-xs font-extrabold uppercase tracking-wide opacity-90">
                 {severe ? (
                   <ShieldAlert className="h-4 w-4 shrink-0" aria-hidden />
                 ) : (
@@ -188,25 +202,57 @@ export function Hero({
               <>
                 <h1
                   id="hero-heading"
-                  className="mt-2.5 font-display text-[clamp(2rem,5vw,2.75rem)] font-extrabold leading-[1.04] tracking-tight [text-shadow:0_1px_2px_rgba(13,34,54,0.35)]"
+                  className="mt-1.5 font-display text-[clamp(1.65rem,3.2vw,2.15rem)] font-extrabold leading-[1.05] tracking-tight [text-shadow:0_1px_2px_rgba(13,34,54,0.35)]"
                 >
                   {t(advice.catchHeadlineKey)}
                 </h1>
 
                 {subline && (
-                  <p className="mt-2 max-w-[48ch] text-[17.5px] leading-snug opacity-95 [text-shadow:0_1px_2px_rgba(13,34,54,0.3)]">
+                  <p className="mt-1.5 text-[15px] leading-snug opacity-95 [text-shadow:0_1px_2px_rgba(13,34,54,0.3)] min-[900px]:line-clamp-2">
                     {subline}
                   </p>
                 )}
 
-                {(weatherChip || advice.decision) && (
-                  <div className="mt-3.5 flex flex-wrap items-center gap-2.5">
+                {advice.confidence && advice.catchConfidenceReasonKey && !severe && (
+                  <div className="mt-2.5 rounded-xl border border-white/24 bg-white/15 px-3 py-2.5 backdrop-blur-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wide opacity-85">
+                        {t('howSure')}
+                      </span>
+                      <span className="font-display text-lg font-extrabold">
+                        {t(`confidence:${confidenceLabelKey(advice.confidence)}`)}
+                      </span>
+                      <span className="flex gap-0.5" aria-hidden>
+                        {[0, 1, 2].map((i) => (
+                          <i
+                            key={i}
+                            className="h-2 w-2 rounded-full"
+                            style={{
+                              background:
+                                i < confidenceDots(advice.confidence!)
+                                  ? '#fff'
+                                  : 'rgba(255,255,255,0.35)',
+                            }}
+                          />
+                        ))}
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-xs leading-snug opacity-96 min-[900px]:line-clamp-2">
+                      {t(advice.catchConfidenceReasonKey)}
+                    </p>
+                  </div>
+                )}
+
+                {(weatherChip ||
+                  (advice.decision && advice.decision !== 'GO') ||
+                  showWhy) && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
                     {weatherChip && (
-                      <span className="inline-flex items-center gap-2 rounded-xl border border-white/22 bg-white/16 px-3.5 py-2 text-sm font-bold backdrop-blur-sm">
+                      <span className={HERO_CHIP}>
                         {advice.weatherVerdict === 'safe' ? (
-                          <Waves className="h-4 w-4 shrink-0" aria-hidden />
+                          <Waves className="h-3.5 w-3.5 shrink-0" aria-hidden />
                         ) : (
-                          <Wind className="h-4 w-4 shrink-0" aria-hidden />
+                          <Wind className="h-3.5 w-3.5 shrink-0" aria-hidden />
                         )}
                         {weatherChip}
                       </span>
@@ -214,143 +260,117 @@ export function Hero({
                     {advice.decision && (
                       <DecisionBadge decision={advice.decision} t={t} />
                     )}
+                    {showWhy && (
+                      <button
+                        type="button"
+                        onClick={() => setWhyOpen((w) => !w)}
+                        className={`${HERO_CHIP} hover:bg-white/22`}
+                        aria-expanded={whyOpen}
+                        aria-controls={whyPanelId}
+                      >
+                        <Leaf className="h-4 w-4 shrink-0" aria-hidden />
+                        {t('why')}
+                        <ChevronDown
+                          className={`h-3.5 w-3.5 shrink-0 transition-transform ${whyOpen ? 'rotate-180' : ''}`}
+                          aria-hidden
+                        />
+                      </button>
+                    )}
                   </div>
                 )}
 
-                {advice.confidence && advice.catchConfidenceReasonKey && !severe && (
-                  <div className="mt-4 flex flex-wrap items-center gap-4 rounded-2xl border border-white/24 bg-white/15 px-4 py-3.5 backdrop-blur-sm sm:gap-5">
-                    <div>
-                      <div className="text-xs font-extrabold uppercase tracking-wide opacity-85">
-                        {t('howSure')}
-                      </div>
-                      <div className="mt-1 flex items-center gap-2.5 font-display text-2xl font-extrabold">
-                        {t(`confidence:${confidenceLabelKey(advice.confidence)}`)}
-                        <span className="flex gap-1" aria-hidden>
-                          {[0, 1, 2].map((i) => (
-                            <i
-                              key={i}
-                              className="h-2.5 w-2.5 rounded-full"
-                              style={{
-                                background:
-                                  i < confidenceDots(advice.confidence!)
-                                    ? '#fff'
-                                    : 'rgba(255,255,255,0.35)',
-                              }}
-                            />
-                          ))}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="min-w-[200px] flex-1 border-white/25 text-sm leading-snug opacity-96 sm:border-l sm:pl-4">
-                      {t(advice.catchConfidenceReasonKey)}
-                    </p>
-                  </div>
-                )}
-
-                {showWhy && (
-                  <div className="mt-3 sm:mt-4">
-                    <button
-                      type="button"
-                      onClick={() => setWhyOpen((w) => !w)}
-                      className="inline-flex min-h-[var(--touch-min)] items-center gap-2 rounded-[13px] border border-white/30 bg-white/17 px-4 py-2 text-sm font-bold hover:bg-white/22 sm:px-5 sm:text-base"
-                      aria-expanded={whyOpen}
-                      aria-controls={whyPanelId}
-                    >
-                      <Leaf className="h-[18px] w-[18px] shrink-0" aria-hidden />
-                      {t('why')}
-                      <ChevronDown
-                        className={`h-4 w-4 shrink-0 transition-transform ${whyOpen ? 'rotate-180' : ''}`}
-                        aria-hidden
-                      />
-                    </button>
-                  </div>
-                )}
               </>
             )}
           </div>
 
           {showBestSpot && bestZone?.catch && boat && (
-            <div className="flex min-w-0 flex-[0_1_380px] flex-col rounded-[18px] border border-white/26 bg-white/16 p-4 backdrop-blur-sm">
-              <div className="flex gap-4">
+            <div className="flex h-full min-w-0 flex-col rounded-[16px] border border-white/26 bg-white/16 p-3.5 backdrop-blur-sm min-[900px]:min-h-0">
+              <div className="flex min-h-0 flex-1 flex-col gap-2">
+              <div className="flex items-start gap-3">
                 <div
-                  className="grid h-16 w-16 shrink-0 place-items-center rounded-[15px] bg-white/22"
+                  className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-white/22"
                   aria-hidden
                 >
                   <Navigation2
-                    className="h-8 w-8"
+                    className="h-6 w-6"
                     style={{ transform: `rotate(${bearingToDegrees(bestZone.bearing)}deg)` }}
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-extrabold uppercase tracking-wider opacity-85">
-                    {t('catchHere')}
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-[10px] font-extrabold uppercase tracking-wider opacity-85">
+                        {t('catchHere')}
+                      </div>
+                      <div className="font-display text-xl font-bold leading-tight">
+                        {bestZone.name}
+                      </div>
+                    </div>
+                    <span
+                      className={`inline-flex shrink-0 rounded-[var(--radius-pill)] px-2.5 py-1 text-xs font-extrabold ${
+                        advice.mutedCatchPill
+                          ? 'bg-white/22 text-white/88'
+                          : 'bg-white'
+                      }`}
+                      style={
+                        advice.mutedCatchPill
+                          ? undefined
+                          : {
+                              color: tierColor(catchTier),
+                              background: tierBg(catchTier),
+                            }
+                      }
+                    >
+                      {tierPillLabel(catchTier, (k) => t(k))}
+                    </span>
                   </div>
-                  <div className="mt-0.5 font-display text-[22px] font-bold leading-tight">
-                    {bestZone.name}
-                  </div>
-                  {(bestZone.species?.length ?? 0) > 0 && (
-                    <div className="mt-1.5 flex items-center gap-2 text-sm font-semibold">
-                      <Fish className="h-4 w-4 shrink-0 opacity-90" aria-hidden />
-                      <span>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold">
+                    {(bestZone.species?.length ?? 0) > 0 && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Fish className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
                         {bestZone.species!.map((s) => t(`species:${s}`)).join(', ')}
                       </span>
-                    </div>
-                  )}
-                  <div className="mt-2 flex flex-wrap gap-3 text-sm font-semibold">
-                    <span className="inline-flex items-center gap-1.5">
-                      <ArrowRight className="h-4 w-4" aria-hidden />
+                    )}
+                    <span className="inline-flex items-center gap-1">
+                      <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                       {bestZone.distanceKm} km · {bestZone.bearing}
                     </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <Clock className="h-4 w-4" aria-hidden />~{formatEta(bestZone.etaMins)}
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" aria-hidden />~{formatEta(bestZone.etaMins)}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-3">
-                <span
-                  className={`inline-flex rounded-[var(--radius-pill)] px-3 py-1.5 text-[14px] font-extrabold ${
-                    advice.mutedCatchPill
-                      ? 'bg-white/22 text-white/88'
-                      : 'bg-white'
-                  }`}
-                  style={
-                    advice.mutedCatchPill
-                      ? undefined
-                      : {
-                          color: tierColor(catchTier),
-                          background: tierBg(catchTier),
-                        }
-                  }
-                >
-                  {tierPillLabel(catchTier, (k) => t(k))}
-                </span>
+              <div className="flex flex-col gap-2">
+                <PresenceShareChips zone={bestZone} showUpdated />
+                {advice.worth && (
+                  <div className="rounded-lg bg-white/14 px-2.5 py-2">
+                    <div className="text-[10px] font-extrabold uppercase tracking-wide opacity-85">
+                      {t('worthTrip')}
+                    </div>
+                    <p className="mt-0.5 text-xs font-semibold leading-snug">
+                      {t(`worthTripExplain_${advice.worth.verdict}`, {
+                        litres: advice.worth.fuelLitres,
+                        cost: advice.worth.fuelCost,
+                      })}
+                    </p>
+                  </div>
+                )}
+              </div>
               </div>
 
-              {advice.worth && (
-                <div className="mt-3 rounded-xl bg-white/14 px-3 py-2.5">
-                  <div className="text-[11px] font-extrabold uppercase tracking-wide opacity-85">
-                    {t('worthTrip')}
-                  </div>
-                  <div className="mt-0.5 text-[15px] font-bold">
-                    {t(`worth_${advice.worth.verdict}`)} · ≈ {advice.worth.fuelLitres} L · ≈ ₹
-                    {advice.worth.fuelCost} {t('worthRoundTrip')}
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+              <div className="mt-auto flex shrink-0 flex-row gap-2 pt-2.5">
                 {advice.primaryAction === 'refresh' ? (
                   <>
                     <button
                       type="button"
                       disabled={!advice.canRefresh || isFetching}
                       onClick={onRefresh}
-                      className="flex min-h-[var(--touch-primary)] flex-1 items-center justify-center gap-2 rounded-[13px] bg-white font-bold text-navy hover:bg-white/92 disabled:opacity-60"
+                      className="flex min-h-[var(--touch-min)] flex-1 items-center justify-center gap-1.5 rounded-[11px] bg-white text-sm font-bold text-navy hover:bg-white/92 disabled:opacity-60 min-[900px]:min-h-[48px]"
                     >
                       <RefreshCw
-                        className={`h-5 w-5 ${isFetching ? 'animate-spin' : ''}`}
+                        className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`}
                         aria-hidden
                       />
                       {advice.canRefresh ? t('getReading') : t('connectToUpdate')}
@@ -358,7 +378,7 @@ export function Hero({
                     <button
                       type="button"
                       onClick={handleNavigate}
-                      className="flex min-h-[var(--touch-min)] items-center justify-center gap-2 rounded-[13px] border border-white/40 bg-white/12 px-4 font-bold hover:bg-white/20"
+                      className="flex min-h-[var(--touch-min)] items-center justify-center rounded-[11px] border border-white/40 bg-white/12 px-3 text-sm font-bold hover:bg-white/20 min-[900px]:min-h-[48px]"
                     >
                       {t('navigate')}
                     </button>
@@ -368,7 +388,7 @@ export function Hero({
                     <button
                       type="button"
                       onClick={handleNavigate}
-                      className="flex min-h-[var(--touch-primary)] flex-1 items-center justify-center gap-2 rounded-[13px] bg-white font-bold text-navy hover:bg-white/92"
+                      className="flex min-h-[var(--touch-min)] flex-1 items-center justify-center gap-1.5 rounded-[11px] bg-white text-sm font-bold text-navy hover:bg-white/92 min-[900px]:min-h-[48px]"
                     >
                       {t('navigate')}
                     </button>
@@ -376,7 +396,7 @@ export function Hero({
                       type="button"
                       disabled={!advice.canRefresh || isFetching}
                       onClick={onRefresh}
-                      className="flex min-h-[var(--touch-min)] items-center justify-center rounded-[13px] border border-white/40 bg-white/12 px-4 hover:bg-white/20 disabled:opacity-60"
+                      className="flex min-h-[var(--touch-min)] items-center justify-center rounded-[11px] border border-white/40 bg-white/12 px-3 hover:bg-white/20 disabled:opacity-60 min-[900px]:min-h-[48px]"
                       aria-label={advice.canRefresh ? t('getReading') : t('connectToUpdate')}
                     >
                       <RefreshCw

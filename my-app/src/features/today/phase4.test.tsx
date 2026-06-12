@@ -31,6 +31,7 @@ describe('Phase 4 overlays', () => {
 
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(screen.getByText('Why the fish are here')).toBeInTheDocument()
+    expect(screen.getByText(/boats there/i)).toBeInTheDocument()
     expect(screen.getByText("What you'll catch").nextElementSibling).toHaveTextContent(
       'Mackerel, Tuna',
     )

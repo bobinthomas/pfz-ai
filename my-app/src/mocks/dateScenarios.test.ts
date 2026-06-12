@@ -8,7 +8,7 @@ import {
 } from './dateScenarios'
 import { buildMockForecast } from './fixtureData'
 
-const now = new Date(2026, 5, 8, 10, 0, 0)
+const now = new Date()
 const options = buildDateOptions(now)
 
 describe('demoScenarioForDate', () => {
@@ -45,6 +45,18 @@ describe('buildMockForecast date demos', () => {
     const advice = getTodayAdvice(forecast, now, { online: true })
     expect(advice.decision).toBe('CAUTION')
     expect(advice.staleness).not.toBe('fresh')
+  })
+
+  it('tomorrow → busy best zone with fair share', () => {
+    const forecast = buildMockForecast({
+      coastId: 'kochi',
+      date: options[2],
+      boatId: boat.id,
+      fixture: 'calm',
+    })
+    const best = forecast.zones.find((z) => z.id === 'KL-712')
+    expect(best?.presence?.boatCount).toBe(9)
+    expect(best?.catchShare?.level).toBe('fair')
   })
 
   it('tomorrow → CAUTION (rough)', () => {

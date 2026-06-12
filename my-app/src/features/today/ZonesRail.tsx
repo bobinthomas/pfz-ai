@@ -20,6 +20,7 @@ import {
 import { buildZoneLetterMap } from '@/lib/utils/zoneLetters'
 import { confidenceColor, tierBg, tierColor } from '@/lib/utils/tier'
 import { ConfidenceMeter } from '@/components/ui/ConfidenceMeter'
+import { PresenceShareChips } from './PresenceShareChips'
 import { tierPillLabel } from './tierLabels'
 
 interface ZonesRailProps {
@@ -178,6 +179,9 @@ function ZonePanel({
                 km: fuel.roundTripKm,
               })}
             </span>
+          </div>
+          <div className="mt-2">
+            <PresenceShareChips zone={zone} compact />
           </div>
         </div>
       </div>

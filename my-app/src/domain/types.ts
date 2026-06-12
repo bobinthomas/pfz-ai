@@ -47,6 +47,23 @@ export interface ZoneSignals {
   chlorophyll: number
 }
 
+export type PresenceBucket = 'quiet' | 'some' | 'busy' | 'very_busy' | 'unknown'
+export type CatchShareLevel = 'good' | 'fair' | 'low' | 'unknown'
+export type PresenceSource = 'ais' | 'vms' | 'proxy' | 'pfz_fleet' | 'unknown'
+
+export interface ZonePresence {
+  boatCount: number | null
+  bucket: PresenceBucket
+  observedAt: string
+  source?: PresenceSource
+  confidence?: ConfidenceLevel
+}
+
+export interface CatchShareInfo {
+  level: CatchShareLevel
+  reasonKey: string
+}
+
 export interface Zone {
   id: string
   name: string
@@ -60,6 +77,8 @@ export interface Zone {
   signals?: ZoneSignals
   species?: string[]
   gear?: string[]
+  presence?: ZonePresence
+  catchShare?: CatchShareInfo
   dataStatus: DataStatus
   reason?: string
 }

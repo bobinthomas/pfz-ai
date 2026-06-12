@@ -1,4 +1,5 @@
 export * from './types'
+export * from './presence'
 export * from './economics'
 export * from './relativeTime'
 export * from './ranking'

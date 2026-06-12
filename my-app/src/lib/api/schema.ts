@@ -21,6 +21,19 @@ const signalsSchema = z.object({
   chlorophyll: z.number(),
 })
 
+const presenceSchema = z.object({
+  boatCount: z.number().nullable(),
+  bucket: z.enum(['quiet', 'some', 'busy', 'very_busy', 'unknown']),
+  observedAt: z.string(),
+  source: z.enum(['ais', 'vms', 'proxy', 'pfz_fleet', 'unknown']).optional(),
+  confidence: z.enum(['high', 'fair', 'low']).optional(),
+})
+
+const catchShareSchema = z.object({
+  level: z.enum(['good', 'fair', 'low', 'unknown']),
+  reasonKey: z.string(),
+})
+
 const zoneSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -34,6 +47,8 @@ const zoneSchema = z.object({
   signals: signalsSchema.optional(),
   species: z.array(z.string()).optional(),
   gear: z.array(z.string()).optional(),
+  presence: presenceSchema.optional(),
+  catchShare: catchShareSchema.optional(),
   dataStatus: z.enum(['ok', 'low_data']),
   reason: z.string().optional(),
 })

@@ -23,6 +23,7 @@ import { enqueueSave } from '@/lib/offline/outbox'
 import { SAVED_SPOTS_KEY } from '@/lib/trips/useSavedSpots'
 import { formatEta } from '@/lib/utils/bearing'
 import { confidenceColor, tierBg, tierColor } from '@/lib/utils/tier'
+import { PresenceShareBlock } from './PresenceShareChips'
 import { tierPillLabel } from './tierLabels'
 import { zoneWhyPoints } from './zoneWhyPoints'
 
@@ -128,6 +129,8 @@ export function ZoneDetailDrawer({
             {zone.center.lat.toFixed(2)}° N, {zone.center.lng.toFixed(2)}° E
           </p>
         </div>
+
+        <PresenceShareBlock zone={zone} />
 
         <div className="rounded-2xl border border-line bg-soft p-4">
           <h3 className="font-display text-base font-bold text-ink">

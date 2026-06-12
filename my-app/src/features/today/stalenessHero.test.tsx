@@ -64,9 +64,11 @@ describe('Hero decision display', () => {
 
     expect(advice.decision).toBe('GO')
     expect(screen.getByText('Strong catch likely')).toBeInTheDocument()
-    expect(screen.getByText('GO')).toBeInTheDocument()
+    expect(screen.getByText(/Sea calm/)).toBeInTheDocument()
+    expect(screen.queryByText('GO')).not.toBeInTheDocument()
     expect(screen.getAllByText('High')).toHaveLength(1)
-    expect(screen.getByText(/Best at Munambam Bank/)).toBeInTheDocument()
+    expect(screen.getByText('Munambam Bank')).toBeInTheDocument()
+    expect(screen.getByText(/30 km/)).toBeInTheDocument()
     expect(screen.queryByRole('status')).toBeNull()
   })
 })
